@@ -172,22 +172,29 @@ export const SystemAdminLayout = () => {
       {/* Sidebar */}
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`} id="sidebar" style={{ display: 'flex', flexDirection: 'column' }}>
         {/* Brand Logo Header */}
-        <div style={{ padding: '4px 6px 18px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '18px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <img
-              src="/logo.jpg"
-              alt="Enqopa RentPro"
-              style={{
-                height: '38px',
-                width: 'auto',
-                borderRadius: '8px',
-                background: '#ffffff',
-                padding: '3px 8px',
-                objectFit: 'contain',
-                boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
-              }}
-            />
-          </div>
+        <div
+          style={{
+            padding: '6px 6px 18px',
+            borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+            marginBottom: '18px',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+          }}
+        >
+          <img
+            src="/logo.jpg"
+            alt="Enqopa RentPro"
+            style={{
+              height: '40px',
+              width: 'auto',
+              borderRadius: '8px',
+              background: '#ffffff',
+              padding: '4px 12px',
+              objectFit: 'contain',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.25)',
+            }}
+          />
         </div>
 
         {/* Navigation Grouped Sections */}
