@@ -170,14 +170,33 @@ export const SystemAdminLayout = () => {
 
       {/* Sidebar */}
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`} id="sidebar" style={{ display: 'flex', flexDirection: 'column' }}>
-        {/* Brand Logo Header */}
-        <div style={{ padding: '0 4px 14px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '14px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Unified Brand & Identity Header Card */}
+        <div
+          style={{
+            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            borderRadius: '12px',
+            padding: '12px',
+            marginBottom: '16px',
+            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)',
+          }}
+        >
+          {/* Logo & Role Badge Row */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingBottom: '10px',
+              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+              marginBottom: '10px',
+            }}
+          >
             <img
               src="/logo.jpg"
               alt="Enqopa RentPro"
               style={{
-                height: '36px',
+                height: '32px',
                 width: 'auto',
                 borderRadius: '6px',
                 background: '#ffffff',
@@ -185,19 +204,23 @@ export const SystemAdminLayout = () => {
                 objectFit: 'contain',
               }}
             />
+            <span
+              style={{
+                fontSize: '9px',
+                fontWeight: 700,
+                letterSpacing: '0.05em',
+                background: 'rgba(245, 158, 11, 0.18)',
+                color: '#fbbf24',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                padding: '2px 7px',
+                borderRadius: '9999px',
+              }}
+            >
+              SUPER ADMIN
+            </span>
           </div>
-        </div>
 
-        {/* User Identity Box */}
-        <div
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '10px',
-            padding: '10px 12px',
-            marginBottom: '14px',
-          }}
-        >
+          {/* User Profile Information */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div
               style={{
@@ -217,7 +240,7 @@ export const SystemAdminLayout = () => {
             >
               SO
             </div>
-            <div style={{ overflow: 'hidden' }}>
+            <div style={{ overflow: 'hidden', flex: 1 }}>
               <div
                 style={{
                   fontSize: '13px',
@@ -243,33 +266,6 @@ export const SystemAdminLayout = () => {
                 {user?.email || 'admin@enqoparentpro.et'}
               </div>
             </div>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginTop: '8px',
-              paddingTop: '6px',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <span
-              style={{
-                fontSize: '9px',
-                fontWeight: 700,
-                letterSpacing: '0.05em',
-                background: 'rgba(245, 158, 11, 0.18)',
-                color: '#fbbf24',
-                border: '1px solid rgba(245, 158, 11, 0.35)',
-                padding: '2px 7px',
-                borderRadius: '9999px',
-              }}
-            >
-              SUPER ADMIN
-            </span>
-            <span style={{ fontSize: '10.5px', color: '#64748b' }}>Root Control</span>
           </div>
         </div>
 
