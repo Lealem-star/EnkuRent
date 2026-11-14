@@ -89,7 +89,8 @@ export const initializeChapa = async (req, res, next) => {
     // 2. Contact Chapa API
     const chapaSecretKey = config.chapaSecretKey;
     const clientUrl = config.clientUrl || 'http://localhost:5173';
-    const callbackUrl = `${clientUrl}/api/gateway/chapa/webhook`;
+    const serverUrl = process.env.SERVER_URL || `${req.protocol}://${req.get('host')}`;
+    const callbackUrl = `${serverUrl}/api/gateway/chapa/webhook`;
     const resolvedReturnUrl = returnUrl || `${clientUrl}/#/tenant?payment_ref=${txRef}`;
 
     let checkoutUrl = null;

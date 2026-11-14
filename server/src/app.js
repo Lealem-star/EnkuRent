@@ -22,9 +22,15 @@ app.use(
   })
 );
 
-// CORS configuration (allow Vite client dev ports)
+// CORS configuration
+const configuredClientUrls = (config.clientUrl || '')
+  .split(',')
+  .map((u) => u.trim().replace(/\/$/, ''))
+  .filter(Boolean);
+
 const allowedOrigins = [
-  config.clientUrl,
+  'https://enku-rent.vercel.app',
+  ...configuredClientUrls,
   'http://localhost:5173',
   'http://127.0.0.1:5173',
   'http://localhost:5174',
@@ -32,17 +38,26 @@ const allowedOrigins = [
   'http://localhost:3000',
 ];
 
+const isOriginAllowed = (origin) => {
+  if (!origin) return true; // allow non-browser clients (mobile apps, curl, server-to-server)
+  const cleanOrigin = origin.replace(/\/$/, '');
+  if (allowedOrigins.includes(cleanOrigin)) return true;
+  // Allow all Vercel preview/production deployments for enku-rent
+  if (cleanOrigin.endsWith('.vercel.app') && cleanOrigin.includes('enku-rent')) return true;
+  return false;
+};
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (isOriginAllowed(origin)) {
         return callback(null, true);
       }
-      return callback(new Error(`CORS origin '${origin}' not allowed.`));
+      return callback(null, false);
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'x-chapa-signature'],
   })
 );
 
