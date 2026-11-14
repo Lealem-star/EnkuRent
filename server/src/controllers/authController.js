@@ -94,58 +94,27 @@ export const registerOwner = async (req, res, next) => {
 
 export const login = async (req, res, next) => {
   try {
-    const { email, phone, password, role } = req.body;
-
-    // Quick demo role login if role is provided
-    if (role) {
-      let targetEmail = 'owner@enkurent.et';
-      if (role === 'manager' || role === 'accountant') {
-        targetEmail = 'selam.fikru@enkurent.et';
-      } else if (role === 'tenant') {
-        const firstTenant = await prisma.user.findFirst({
-          where: { role: 'TENANT' },
-        });
-        if (firstTenant) targetEmail = firstTenant.email;
-      }
-
-      const demoUser = await prisma.user.findUnique({
-        where: { email: targetEmail },
-        include: {
-          buildings: { select: { buildingId: true } },
-          tenantProfile: {
-            include: {
-              contracts: {
-                where: { status: 'ACTIVE' },
-                include: { office: { include: { building: true } } },
-              },
-            },
-          },
-        },
-      });
-
-      if (demoUser) {
-        const token = generateToken({ userId: demoUser.id, role: demoUser.role });
-        return successResponse(res, 'Demo sign in successful', {
-          token,
-          user: {
-            id: demoUser.id,
-            name: demoUser.name,
-            email: demoUser.email,
-            phone: demoUser.phone,
-            role: demoUser.role,
-            title: demoUser.title,
-            buildingIds: demoUser.role === 'OWNER' ? null : demoUser.buildings.map((b) => b.buildingId),
-            tenant: demoUser.tenantProfile || null,
-          },
-        });
-      }
-    }
+    const { email, phone, password } = req.body;
 
     if (!email && !phone) {
-      return errorResponse(res, 'Email or phone is required', 400);
+      return errorResponse(res, 'Email or phone number is required.', 400);
     }
 
-    const where = email ? { email: email.toLowerCase() } : { phone };
+    if (!password) {
+      return errorResponse(res, 'Password is required.', 400);
+    }
+
+    let searchEmail = email ? email.toLowerCase().trim() : null;
+    const where = searchEmail
+      ? {
+          OR: [
+            { email: searchEmail },
+            { email: searchEmail.replace('@enkurent.et', '@enqoparentpro.et') },
+            { email: searchEmail.replace('@enqoparentpro.et', '@enkurent.et') },
+          ],
+        }
+      : { phone: phone?.trim() };
+
     const user = await prisma.user.findFirst({
       where,
       include: {
@@ -162,7 +131,12 @@ export const login = async (req, res, next) => {
     });
 
     if (!user) {
-      return errorResponse(res, 'Invalid credentials', 401);
+      return errorResponse(res, 'Invalid credentials.', 401);
+    }
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
+      return errorResponse(res, 'Invalid credentials.', 401);
     }
 
     if (user.approvalStatus === 'PENDING') {
@@ -176,20 +150,13 @@ export const login = async (req, res, next) => {
     if (user.approvalStatus === 'REJECTED') {
       return errorResponse(
         res,
-        `Your application was not approved. ${user.notes ? `Reason: ${user.notes}` : 'Please contact support@enkurent.et for inquiries.'}`,
+        `Your application was not approved. ${user.notes ? `Reason: ${user.notes}` : 'Please contact support@enqoparentpro.et for inquiries.'}`,
         403
       );
     }
 
     if (!user.isActive) {
       return errorResponse(res, 'Account is deactivated. Contact administration.', 403);
-    }
-
-    if (password) {
-      const isMatch = await bcrypt.compare(password, user.passwordHash);
-      if (!isMatch) {
-        return errorResponse(res, 'Invalid credentials', 401);
-      }
     }
 
     const token = generateToken({ userId: user.id, role: user.role });

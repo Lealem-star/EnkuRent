@@ -15,8 +15,19 @@ import LoginPage from './pages/LoginPage';
 import RegisterPage from './pages/RegisterPage';
 import PortalResolverPage from './pages/PortalResolverPage';
 
-// Dashboards
+// Dashboards & Super Admin SaaS Pages
 import SystemAdminDashboardPage from './pages/admin/SystemAdminDashboardPage';
+import SystemAdminOwnersPage from './pages/admin/SystemAdminOwnersPage';
+import SystemAdminPlansPage from './pages/admin/SystemAdminPlansPage';
+import SystemAdminSubscriptionsPage from './pages/admin/SystemAdminSubscriptionsPage';
+import SystemAdminFinancePage from './pages/admin/SystemAdminFinancePage';
+import SystemAdminGatewaysPage from './pages/admin/SystemAdminGatewaysPage';
+import SystemAdminUsersPage from './pages/admin/SystemAdminUsersPage';
+import SystemAdminPropertiesPage from './pages/admin/SystemAdminPropertiesPage';
+import SystemAdminSupportPage from './pages/admin/SystemAdminSupportPage';
+import SystemAdminNotificationsPage from './pages/admin/SystemAdminNotificationsPage';
+import SystemAdminSystemPage from './pages/admin/SystemAdminSystemPage';
+import SystemAdminSettingsPage from './pages/admin/SystemAdminSettingsPage';
 import OwnerDashboardPage from './pages/OwnerDashboardPage';
 import ManagerDashboardPage from './pages/ManagerDashboardPage';
 
@@ -104,8 +115,18 @@ function App() {
       >
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<SystemAdminDashboardPage />} />
-        <Route path="owners" element={<SystemAdminDashboardPage />} />
+        <Route path="owners" element={<SystemAdminOwnersPage />} />
+        <Route path="properties" element={<SystemAdminPropertiesPage />} />
+        <Route path="users" element={<SystemAdminUsersPage />} />
+        <Route path="plans" element={<SystemAdminPlansPage />} />
+        <Route path="subscriptions" element={<SystemAdminSubscriptionsPage />} />
+        <Route path="finance" element={<SystemAdminFinancePage />} />
+        <Route path="integrations/payments" element={<SystemAdminGatewaysPage />} />
+        <Route path="support" element={<SystemAdminSupportPage />} />
+        <Route path="notifications" element={<SystemAdminNotificationsPage />} />
         <Route path="audit" element={<AuditLogPage />} />
+        <Route path="system" element={<SystemAdminSystemPage />} />
+        <Route path="settings" element={<SystemAdminSettingsPage />} />
       </Route>
 
       {/* Building Owner Dedicated Shell & Routes */}

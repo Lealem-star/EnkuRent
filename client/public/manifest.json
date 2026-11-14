@@ -1,0 +1,40 @@
+{
+  "short_name": "RentPro",
+  "name": "Enqopa RentPro — Smart Rental Management",
+  "description": "Commercial and residential property, unit, and tenant rental management platform by Enqopa Technologies PLC.",
+  "icons": [
+    {
+      "src": "/logo.jpg",
+      "type": "image/jpeg",
+      "sizes": "192x192 512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/#/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "theme_color": "#0B2239",
+  "background_color": "#0B2239",
+  "shortcuts": [
+    {
+      "name": "Pay Rent",
+      "short_name": "Pay",
+      "description": "Pay your monthly rent instantly",
+      "url": "/#/tenant"
+    },
+    {
+      "name": "Owner Dashboard",
+      "short_name": "Dashboard",
+      "description": "View property performance and occupancy",
+      "url": "/#/owner/dashboard"
+    }
+  ],
+  "categories": ["business", "finance", "productivity"]
+}

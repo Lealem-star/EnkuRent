@@ -118,11 +118,11 @@ export const AuthProvider = ({ children }) => {
   const loginAsDemo = async (roleName) => {
     setLoading(true);
     try {
-      let targetEmail = 'owner@enkurent.et';
+      let targetEmail = 'owner@enqoparentpro.et';
       if (roleName === 'accountant') {
-        targetEmail = 'selam.fikru@enkurent.et';
+        targetEmail = 'selam.fikru@enqoparentpro.et';
       } else if (roleName === 'manager') {
-        targetEmail = 'getnet.a@enkurent.et';
+        targetEmail = 'getnet.a@enqoparentpro.et';
       } else if (roleName === 'tenant') {
         targetEmail = 'abebe.kebede.101@gmail.com';
       }

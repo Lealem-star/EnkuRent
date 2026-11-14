@@ -5,11 +5,19 @@ import { successResponse, errorResponse } from '../utils/response.js';
 export const getOffices = async (req, res, next) => {
   try {
     const { buildingId, floor, status } = req.query;
-    const where = {};
+    const where = { isDeleted: false };
 
-    // Manager building permission scoping
-    if (!req.user.isOwner && req.user.buildingIds) {
-      if (buildingId) {
+    if (req.user.isSuperAdmin) {
+      if (buildingId && buildingId !== '__all__') {
+        where.buildingId = String(buildingId);
+      }
+    } else if (req.user.isOwner) {
+      where.building = { ownerId: req.user.id, isDeleted: false };
+      if (buildingId && buildingId !== '__all__') {
+        where.buildingId = String(buildingId);
+      }
+    } else if (req.user.buildingIds && req.user.buildingIds.length > 0) {
+      if (buildingId && buildingId !== '__all__') {
         if (!req.user.buildingIds.includes(String(buildingId))) {
           return successResponse(res, 'No offices accessible', []);
         }
@@ -17,8 +25,8 @@ export const getOffices = async (req, res, next) => {
       } else {
         where.buildingId = { in: req.user.buildingIds };
       }
-    } else if (buildingId && buildingId !== '__all__') {
-      where.buildingId = String(buildingId);
+    } else {
+      return successResponse(res, 'No offices accessible', []);
     }
 
     if (floor) where.floor = parseInt(floor, 10);
@@ -29,7 +37,7 @@ export const getOffices = async (req, res, next) => {
       include: {
         building: { select: { id: true, name: true, address: true } },
         contracts: {
-          where: { status: 'ACTIVE' },
+          where: { status: 'ACTIVE', isDeleted: false },
           include: {
             tenant: true,
             payments: {
@@ -111,6 +119,15 @@ export const getOfficeById = async (req, res, next) => {
       return errorResponse(res, 'Office not found', 404);
     }
 
+    if (!req.user.isSuperAdmin) {
+      if (req.user.isOwner && office.building?.ownerId !== req.user.id) {
+        return errorResponse(res, 'Access denied: You do not own this office property', 403);
+      }
+      if (!req.user.isOwner && req.user.buildingIds && !req.user.buildingIds.includes(office.buildingId)) {
+        return errorResponse(res, 'Access denied for this office', 403);
+      }
+    }
+
     if (!req.user.isOwner && req.user.buildingIds && !req.user.buildingIds.includes(office.buildingId)) {
       return errorResponse(res, 'Access denied for this office', 403);
     }
@@ -146,6 +163,26 @@ export const updateOfficeStatus = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { status } = req.body;
+
+    const existingOffice = await prisma.office.findUnique({
+      where: { id },
+      include: { building: true },
+    });
+
+    if (!existingOffice) {
+      return errorResponse(res, 'Office not found', 404);
+    }
+
+    // Multi-tenant authorization check
+    if (!req.user.isSuperAdmin) {
+      if (req.user.isOwner) {
+        if (existingOffice.building?.ownerId !== req.user.id) {
+          return errorResponse(res, 'Access denied: You do not own this property office.', 403);
+        }
+      } else if (!req.user.buildingIds || !req.user.buildingIds.includes(existingOffice.buildingId)) {
+        return errorResponse(res, 'Access denied: You are not assigned to manage this building.', 403);
+      }
+    }
 
     const office = await prisma.office.update({
       where: { id },

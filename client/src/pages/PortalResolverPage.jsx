@@ -95,7 +95,7 @@ export const PortalResolverPage = () => {
           This portal link is not registered or the office does not exist.
         </p>
         <button className="btn btn-primary" onClick={() => navigate('/')}>
-          Back to EnkuRent
+          Back to Enqopa RentPro
         </button>
       </div>
     );

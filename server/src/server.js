@@ -6,7 +6,7 @@ import { startCronJobs } from './jobs/estateCron.js';
 const PORT = config.port || 5000;
 
 const server = app.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 EnkuRent API server running on http://localhost:${PORT}`);
+  console.log(`🚀 Enqopa RentPro API server running on http://localhost:${PORT}`);
   console.log(`📡 Health endpoint available at http://localhost:${PORT}/api/health`);
   console.log(`🔒 Allowed CORS Client URL: ${config.clientUrl}`);
 

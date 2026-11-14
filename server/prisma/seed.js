@@ -28,7 +28,7 @@ const NAMES = [
 ];
 
 async function main() {
-  console.log('🌱 Seeding EnkuRent database...');
+  console.log('🌱 Seeding Enqopa RentPro database...');
 
   // 1. Clean existing records in reverse relation order
   await prisma.auditLog.deleteMany();
@@ -50,7 +50,7 @@ async function main() {
     data: {
       id: 'usr_owner_1',
       name: 'Meseret Alemayehu',
-      email: 'owner@enkurent.et',
+      email: 'owner@enqoparentpro.et',
       phone: '0911000000',
       passwordHash: ownerPassword,
       role: Role.OWNER,
@@ -64,7 +64,7 @@ async function main() {
     data: {
       id: 'm1',
       name: 'Selamawit Fikru',
-      email: 'selam.fikru@enkurent.et',
+      email: 'selam.fikru@enqoparentpro.et',
       phone: '0911223344',
       passwordHash: defaultPassword,
       role: Role.MANAGER,
@@ -77,7 +77,7 @@ async function main() {
     data: {
       id: 'm2',
       name: 'Getnet Alemayehu',
-      email: 'getnet.a@enkurent.et',
+      email: 'getnet.a@enqoparentpro.et',
       phone: '0911556677',
       passwordHash: defaultPassword,
       role: Role.MANAGER,
@@ -454,7 +454,7 @@ async function main() {
   }
 
   console.log(`✅ Seeded ${auditEntries.length} initial audit entries`);
-  console.log('🎉 EnkuRent database successfully seeded with fidelity data!');
+  console.log('🎉 Enqopa RentPro database successfully seeded with fidelity data!');
 }
 
 main()

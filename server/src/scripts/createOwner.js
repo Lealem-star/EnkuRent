@@ -36,7 +36,7 @@ function ask(rl, query, defaultValue) {
 
 async function createOwner() {
   console.log('\n============================================================');
-  console.log('👑  ENKURENT — INITIALIZE OWNER CREDENTIALS');
+  console.log('👑  ENQOPA RENTPRO — INITIALIZE OWNER CREDENTIALS');
   console.log('============================================================\n');
 
   const cliArgs = parseArgs();
@@ -57,7 +57,7 @@ async function createOwner() {
 
     try {
       if (!name) name = await ask(rl, 'Full Name', 'Meseret Alemayehu');
-      if (!email) email = await ask(rl, 'Owner Email', 'owner@enkurent.et');
+      if (!email) email = await ask(rl, 'Owner Email', 'owner@enqoparentpro.et');
       if (!phone) phone = await ask(rl, 'Phone Number', '0911000000');
       if (!password) password = await ask(rl, 'Password', 'admin123');
     } finally {
@@ -66,7 +66,7 @@ async function createOwner() {
   } else {
     // Non-interactive fallback defaults
     name = name || 'Meseret Alemayehu';
-    email = email || 'owner@enkurent.et';
+    email = email || 'owner@enqoparentpro.et';
     phone = phone || '0911000000';
     password = password || 'admin123';
   }

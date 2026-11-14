@@ -44,7 +44,7 @@ export const ReportsPage = () => {
         const downloadUrl = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = downloadUrl;
-        a.download = `enkurent_${type}_report.${format}`;
+        a.download = `enqopa_${type}_report.${format}`;
         document.body.appendChild(a);
         a.click();
         a.remove();

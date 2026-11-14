@@ -25,9 +25,17 @@ export const getPayments = async (req, res, next) => {
     const { buildingId, status, search, period } = req.query;
     const where = {};
 
-    // Scoping for manager
-    if (!req.user.isOwner && req.user.buildingIds) {
-      if (buildingId) {
+    if (req.user.isSuperAdmin) {
+      if (buildingId && buildingId !== '__all__') {
+        where.buildingId = String(buildingId);
+      }
+    } else if (req.user.isOwner) {
+      where.building = { ownerId: req.user.id };
+      if (buildingId && buildingId !== '__all__') {
+        where.buildingId = String(buildingId);
+      }
+    } else if (req.user.buildingIds && req.user.buildingIds.length > 0) {
+      if (buildingId && buildingId !== '__all__') {
         if (!req.user.buildingIds.includes(String(buildingId))) {
           return successResponse(res, 'No payments accessible', []);
         }
@@ -35,8 +43,8 @@ export const getPayments = async (req, res, next) => {
       } else {
         where.buildingId = { in: req.user.buildingIds };
       }
-    } else if (buildingId && buildingId !== '__all__') {
-      where.buildingId = String(buildingId);
+    } else {
+      return successResponse(res, 'No payments accessible', []);
     }
 
     if (period) {
@@ -125,7 +133,12 @@ export const getPayments = async (req, res, next) => {
     if (status === 'overdue' || status === 'all') {
       // Find all active contracts that have no APPROVED or PENDING payment for September 2026
       const targetBuildingWhere = {};
-      if (!req.user.isOwner && req.user.buildingIds) {
+      if (req.user.isOwner) {
+        targetBuildingWhere.building = { ownerId: req.user.id };
+        if (buildingId && buildingId !== '__all__') {
+          targetBuildingWhere.buildingId = String(buildingId);
+        }
+      } else if (!req.user.isOwner && req.user.buildingIds) {
         if (buildingId && buildingId !== '__all__') {
           targetBuildingWhere.buildingId = String(buildingId);
         } else {
@@ -251,11 +264,20 @@ export const recordManualPayment = async (req, res, next) => {
       return errorResponse(res, 'Tenant has no active contract.', 400);
     }
 
-    const office = contract.office;
+    const office = await prisma.office.findUnique({
+      where: { id: contract.officeId },
+      include: { building: true },
+    });
 
-    // Check manager access
-    if (!req.user.isOwner && req.user.buildingIds && !req.user.buildingIds.includes(office.buildingId)) {
-      return errorResponse(res, 'You do not have access to this building.', 403);
+    // Multi-tenant check
+    if (!req.user.isSuperAdmin) {
+      if (req.user.isOwner) {
+        if (office.building?.ownerId !== req.user.id) {
+          return errorResponse(res, 'Access denied: You do not own this property building.', 403);
+        }
+      } else if (!req.user.buildingIds || !req.user.buildingIds.includes(office.buildingId)) {
+        return errorResponse(res, 'Access denied: You do not have access to manage this building.', 403);
+      }
     }
 
     const payDate = paymentDate ? new Date(paymentDate) : new Date();
@@ -296,7 +318,7 @@ export const recordManualPayment = async (req, res, next) => {
       });
 
       return p;
-    });
+    }, { maxWait: 15000, timeout: 30000 });
 
     return successResponse(res, 'Manual payment recorded successfully', payment, 201);
   } catch (error) {
@@ -310,15 +332,22 @@ export const approvePayment = async (req, res, next) => {
 
     const payment = await prisma.payment.findUnique({
       where: { id },
-      include: { tenant: true, office: true },
+      include: { tenant: true, office: true, building: true },
     });
 
     if (!payment) {
       return errorResponse(res, 'Payment not found', 404);
     }
 
-    if (!req.user.isOwner && req.user.buildingIds && !req.user.buildingIds.includes(payment.buildingId)) {
-      return errorResponse(res, 'You do not have access to this property.', 403);
+    // Multi-tenant authorization check
+    if (!req.user.isSuperAdmin) {
+      if (req.user.isOwner) {
+        if (payment.building?.ownerId !== req.user.id) {
+          return errorResponse(res, 'Access denied: You do not own this property payment.', 403);
+        }
+      } else if (!req.user.buildingIds || !req.user.buildingIds.includes(payment.buildingId)) {
+        return errorResponse(res, 'Access denied: You do not have access to this property.', 403);
+      }
     }
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -344,7 +373,7 @@ export const approvePayment = async (req, res, next) => {
       });
 
       return p;
-    });
+    }, { maxWait: 15000, timeout: 30000 });
 
     return successResponse(res, 'Payment approved successfully', updated);
   } catch (error) {
@@ -363,15 +392,22 @@ export const rejectPayment = async (req, res, next) => {
 
     const payment = await prisma.payment.findUnique({
       where: { id },
-      include: { tenant: true, office: true },
+      include: { tenant: true, office: true, building: true },
     });
 
     if (!payment) {
       return errorResponse(res, 'Payment not found', 404);
     }
 
-    if (!req.user.isOwner && req.user.buildingIds && !req.user.buildingIds.includes(payment.buildingId)) {
-      return errorResponse(res, 'You do not have access to this property.', 403);
+    // Multi-tenant authorization check
+    if (!req.user.isSuperAdmin) {
+      if (req.user.isOwner) {
+        if (payment.building?.ownerId !== req.user.id) {
+          return errorResponse(res, 'Access denied: You do not own this property payment.', 403);
+        }
+      } else if (!req.user.buildingIds || !req.user.buildingIds.includes(payment.buildingId)) {
+        return errorResponse(res, 'Access denied: You do not have access to this property.', 403);
+      }
     }
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -397,7 +433,7 @@ export const rejectPayment = async (req, res, next) => {
       });
 
       return p;
-    });
+    }, { maxWait: 15000, timeout: 30000 });
 
     return successResponse(res, 'Payment rejected', updated);
   } catch (error) {
@@ -430,7 +466,7 @@ export const submitReceipt = async (req, res, next) => {
       include: {
         contracts: {
           where: { status: 'ACTIVE' },
-          include: { office: true },
+          include: { office: { include: { building: true } } },
         },
       },
     });
@@ -445,6 +481,21 @@ export const submitReceipt = async (req, res, next) => {
     }
 
     const office = contract.office;
+
+    // Multi-tenant authorization check
+    if (!req.user.isSuperAdmin) {
+      if (req.user.role === 'TENANT') {
+        if (tenant.id !== req.user.tenantId && tenant.userId !== req.user.id) {
+          return errorResponse(res, 'Access denied: You can only submit receipts for your own lease.', 403);
+        }
+      } else if (req.user.role === 'OWNER') {
+        if (office.building?.ownerId !== req.user.id) {
+          return errorResponse(res, 'Access denied: You do not own the property for this tenant.', 403);
+        }
+      } else if (req.user.buildingIds && !req.user.buildingIds.includes(office.buildingId)) {
+        return errorResponse(res, 'Access denied: You are not assigned to manage this property.', 403);
+      }
+    }
     const payDate = paymentDate ? new Date(paymentDate) : new Date();
     const receiptUrl = req.file ? `/uploads/${req.file.filename}` : null;
     const cleanRef = txnRef || 'FT' + Math.floor(100000 + Math.random() * 900000);
@@ -483,7 +534,7 @@ export const submitReceipt = async (req, res, next) => {
       });
 
       return p;
-    });
+    }, { maxWait: 15000, timeout: 30000 });
 
     return successResponse(res, 'Receipt submitted for verification.', payment, 201);
   } catch (error) {

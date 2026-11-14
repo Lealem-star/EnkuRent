@@ -2,9 +2,9 @@ import bcrypt from 'bcryptjs';
 import { prisma } from '../config/prisma.js';
 
 async function main() {
-  const email = process.env.SYSTEM_OWNER_EMAIL || 'admin@enkurent.et';
+  const email = process.env.SYSTEM_OWNER_EMAIL || 'admin@enqoparentpro.et';
   const password = process.env.SYSTEM_OWNER_PASSWORD || 'SuperAdminPassword123!';
-  const name = process.env.SYSTEM_OWNER_NAME || 'EnkuRent System Owner';
+  const name = process.env.SYSTEM_OWNER_NAME || 'Enqopa System Owner';
   const phone = process.env.SYSTEM_OWNER_PHONE || '+251911000001';
 
   console.log(`Checking system owner account (${email})...`);

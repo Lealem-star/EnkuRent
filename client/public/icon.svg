@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <rect width="512" height="512" rx="108" fill="#0B2239" />
+  <!-- Golden swoosh ring -->
+  <path
+    d="M60 398C60 398 90 440 190 440C300 440 430 360 445 230C450 185 430 145 430 145C430 145 450 205 385 285C315 370 190 398 100 378L60 398Z"
+    fill="#F59E0B"
+  />
+  <!-- Highrise Left -->
+  <path
+    d="M102 368V195L194 144V368H102Z"
+    fill="#153655"
+  />
+  <rect x="127" y="215" width="20" height="30" rx="4" fill="#FFFFFF" opacity="0.9" />
+  <rect x="127" y="265" width="20" height="30" rx="4" fill="#FFFFFF" opacity="0.9" />
+  <rect x="127" y="315" width="20" height="30" rx="4" fill="#FFFFFF" opacity="0.9" />
+  <!-- Highrise Main Right -->
+  <path
+    d="M194 368V114L348 64V368H194Z"
+    fill="#081829"
+  />
+  <rect x="224" y="114" width="26" height="36" rx="4" fill="#FFFFFF" opacity="0.95" />
+  <rect x="275" y="99" width="26" height="36" rx="4" fill="#FFFFFF" opacity="0.95" />
+  <rect x="224" y="175" width="26" height="36" rx="4" fill="#FFFFFF" opacity="0.95" />
+  <rect x="275" y="160" width="26" height="36" rx="4" fill="#FFFFFF" opacity="0.95" />
+  <rect x="224" y="236" width="26" height="36" rx="4" fill="#FFFFFF" opacity="0.95" />
+  <rect x="275" y="221" width="26" height="36" rx="4" fill="#FFFFFF" opacity="0.95" />
+  <!-- Gable Roof Front -->
+  <path
+    d="M144 368L256 276L368 368H328L256 306L184 368H144Z"
+    fill="#F59E0B"
+  />
+  <!-- Window Accent -->
+  <rect x="240" y="324" width="12" height="12" rx="2" fill="#F59E0B" />
+  <rect x="260" y="324" width="12" height="12" rx="2" fill="#F59E0B" />
+  <rect x="240" y="344" width="12" height="12" rx="2" fill="#F59E0B" />
+  <rect x="260" y="344" width="12" height="12" rx="2" fill="#F59E0B" />
+</svg>

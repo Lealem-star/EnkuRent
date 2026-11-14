@@ -13,18 +13,27 @@ export const createBuildingSchema = z.object({
 
 export const getBuildings = async (req, res, next) => {
   try {
-    const where = {};
-    if (!req.user.isOwner && req.user.buildingIds) {
+    const where = { isDeleted: false };
+    if (req.user.isSuperAdmin) {
+      if (req.query.ownerId) {
+        where.ownerId = String(req.query.ownerId);
+      }
+    } else if (req.user.isOwner) {
+      where.ownerId = req.user.id;
+    } else if (req.user.buildingIds && req.user.buildingIds.length > 0) {
       where.id = { in: req.user.buildingIds };
+    } else {
+      return successResponse(res, 'Buildings retrieved', []);
     }
 
     const buildings = await prisma.building.findMany({
       where,
       include: {
         offices: {
+          where: { isDeleted: false },
           include: {
             contracts: {
-              where: { status: 'ACTIVE' },
+              where: { status: 'ACTIVE', isDeleted: false },
               include: { tenant: true },
             },
           },
@@ -72,8 +81,18 @@ export const getBuildingById = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    if (!req.user.isOwner && req.user.buildingIds && !req.user.buildingIds.includes(id)) {
-      return errorResponse(res, 'Access denied for this building', 403);
+    if (!req.user.isSuperAdmin) {
+      if (req.user.isOwner) {
+        const check = await prisma.building.findFirst({
+          where: { id, ownerId: req.user.id },
+          select: { id: true },
+        });
+        if (!check) {
+          return errorResponse(res, 'Access denied: You do not own this property', 403);
+        }
+      } else if (!req.user.buildingIds || !req.user.buildingIds.includes(id)) {
+        return errorResponse(res, 'Access denied for this building', 403);
+      }
     }
 
     const building = await prisma.building.findUnique({
@@ -125,14 +144,61 @@ export const getBuildingById = async (req, res, next) => {
 
 export const createBuilding = async (req, res, next) => {
   try {
-    const { name, address, floors, officesPerFloor = 6 } = req.body;
+    const { name, address, floors, officesPerFloor = 6, ownerId: requestedOwnerId } = req.body;
+    const targetOwnerId = req.user.isSuperAdmin ? (requestedOwnerId || req.user.id) : req.user.id;
+
+    // Enforce subscription plan entitlements for non-superadmin
+    if (!req.user.isSuperAdmin) {
+      const activeSub = await prisma.subscription.findFirst({
+        where: {
+          ownerId: targetOwnerId,
+          status: { in: ['ACTIVE', 'TRIAL', 'PAST_DUE'] },
+        },
+        include: { plan: true },
+      });
+
+      if (!activeSub) {
+        return errorResponse(res, 'No active subscription found. Please subscribe to an Enqopa RentPro plan to add properties.', 403);
+      }
+
+      // 1. Check maxProperties limit
+      const existingBuildingCount = await prisma.building.count({
+        where: { ownerId: targetOwnerId, isDeleted: false },
+      });
+
+      if (existingBuildingCount >= activeSub.plan.maxProperties) {
+        return errorResponse(
+          res,
+          `Property limit reached. Your ${activeSub.plan.name} plan allows up to ${activeSub.plan.maxProperties} properties. Please upgrade your plan.`,
+          403
+        );
+      }
+
+      // 2. Check maxOffices limit
+      const unitsToAdd = Number(floors) * Number(officesPerFloor);
+      const existingUnitsCount = await prisma.office.count({
+        where: {
+          building: { ownerId: targetOwnerId, isDeleted: false },
+          isDeleted: false,
+        },
+      });
+
+      if (existingUnitsCount + unitsToAdd > activeSub.plan.maxOffices) {
+        return errorResponse(
+          res,
+          `Unit quota exceeded. Your ${activeSub.plan.name} plan allows up to ${activeSub.plan.maxOffices} units (currently managing ${existingUnitsCount}). Adding ${unitsToAdd} units would exceed your quota. Please upgrade your plan.`,
+          403
+        );
+      }
+    }
 
     const building = await prisma.$transaction(async (tx) => {
       const b = await tx.building.create({
         data: {
           name,
           address,
-          floors,
+          floors: Number(floors),
+          ownerId: targetOwnerId,
         },
       });
 
@@ -180,6 +246,15 @@ export const updateBuilding = async (req, res, next) => {
     const { id } = req.params;
     const { name, address, floors } = req.body;
 
+    if (!req.user.isSuperAdmin) {
+      const exists = await prisma.building.findFirst({
+        where: { id, ownerId: req.user.id, isDeleted: false },
+      });
+      if (!exists) {
+        return errorResponse(res, 'Access denied: You do not own this property', 403);
+      }
+    }
+
     const building = await prisma.building.update({
       where: { id },
       data: {
@@ -199,11 +274,40 @@ export const deleteBuilding = async (req, res, next) => {
   try {
     const { id } = req.params;
 
-    await prisma.building.delete({
-      where: { id },
+    if (!req.user.isSuperAdmin) {
+      const exists = await prisma.building.findFirst({
+        where: { id, ownerId: req.user.id, isDeleted: false },
+      });
+      if (!exists) {
+        return errorResponse(res, 'Access denied: You do not own this property', 403);
+      }
+    }
+
+    // Safe soft deletion preserving historical financial records and audit entries
+    await prisma.$transaction(async (tx) => {
+      await tx.office.updateMany({
+        where: { buildingId: id },
+        data: { isDeleted: true, deletedAt: new Date() },
+      });
+
+      await tx.building.update({
+        where: { id },
+        data: { isDeleted: true, deletedAt: new Date() },
+      });
+
+      await tx.auditLog.create({
+        data: {
+          actorName: req.user.name,
+          actorId: req.user.id,
+          action: 'BUILDING_ARCHIVED',
+          entityType: 'BUILDING',
+          entityId: id,
+          meta: `Soft-deleted building ${id} and archived unit inventory while preserving historical ledgers`,
+        },
+      });
     });
 
-    return successResponse(res, 'Building deleted successfully');
+    return successResponse(res, 'Building archived successfully with data preserved');
   } catch (error) {
     next(error);
   }

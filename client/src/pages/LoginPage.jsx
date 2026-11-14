@@ -67,24 +67,21 @@ export const LoginPage = () => {
         }}
       >
         {/* Header */}
-        <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-          <div
-            className="brand-mark"
-            style={{
-              margin: '0 auto 12px',
-              width: '46px',
-              height: '46px',
-              fontSize: '22px',
-              background: 'var(--gold)',
-              color: '#211804',
-              fontWeight: 700,
-            }}
-          >
-            ⚡
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
+            <img
+              src="/logo.jpg"
+              alt="Enqopa RentPro"
+              style={{
+                height: '52px',
+                width: 'auto',
+                objectFit: 'contain',
+              }}
+            />
           </div>
-          <h2 style={{ margin: 0, fontSize: '22px' }}>Sign In to EnkuRent</h2>
-          <div style={{ color: 'var(--ink-soft)', fontSize: '13px', marginTop: '6px' }}>
-            Property &amp; Rent Management Platform
+          <h2 style={{ margin: 0, fontSize: '20px', color: 'var(--ink)' }}>Sign In to Enqopa RentPro</h2>
+          <div style={{ color: 'var(--ink-soft)', fontSize: '12.5px', marginTop: '4px' }}>
+            Smart Rental Management, Made Easy
           </div>
         </div>
 
@@ -94,7 +91,7 @@ export const LoginPage = () => {
             <label>Email Address</label>
             <input
               type="email"
-              placeholder="e.g. admin@enkurent.et or owner@bekele.et"
+              placeholder="e.g. admin@enqoparentpro.et or owner@enqoparentpro.et"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required

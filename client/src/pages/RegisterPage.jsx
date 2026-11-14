@@ -86,23 +86,23 @@ export const RegisterPage = () => {
         }}
       >
         {/* Brand Header */}
-        <div style={{ textAlign: 'center', marginBottom: '26px' }}>
-          <div
-            className="brand-mark"
-            style={{
-              margin: '0 auto 12px',
-              width: '46px',
-              height: '46px',
-              fontSize: '22px',
-            }}
-          >
-            ⚡
+        <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
+            <img
+              src="/logo.jpg"
+              alt="Enqopa RentPro"
+              style={{
+                height: '52px',
+                width: 'auto',
+                objectFit: 'contain',
+              }}
+            />
           </div>
-          <h2 style={{ margin: 0, fontFamily: 'Fraunces, serif' }}>
+          <h2 style={{ margin: 0, fontFamily: 'Fraunces, serif', fontSize: '20px', color: 'var(--ink)' }}>
             Register as Building Owner
           </h2>
-          <div style={{ color: 'var(--ink-soft)', fontSize: '13px', marginTop: '6px' }}>
-            EnkuRent Property Management Platform
+          <div style={{ color: 'var(--ink-soft)', fontSize: '12.5px', marginTop: '4px' }}>
+            Enqopa RentPro — Smart Rental Management, Made Easy
           </div>
         </div>
 

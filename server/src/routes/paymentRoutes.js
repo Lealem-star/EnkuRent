@@ -19,7 +19,9 @@ router.use(authenticate);
 router.get('/', getPayments);
 router.post('/manual', authorize('OWNER', 'MANAGER'), validate(manualPaymentSchema), recordManualPayment);
 router.post('/:id/approve', authorize('OWNER', 'MANAGER'), approvePayment);
+router.patch('/:id/approve', authorize('OWNER', 'MANAGER'), approvePayment);
 router.post('/:id/reject', authorize('OWNER', 'MANAGER'), validate(rejectPaymentSchema), rejectPayment);
+router.patch('/:id/reject', authorize('OWNER', 'MANAGER'), validate(rejectPaymentSchema), rejectPayment);
 router.post('/receipt', uploadReceipt.single('receipt'), submitReceipt);
 
 export default router;

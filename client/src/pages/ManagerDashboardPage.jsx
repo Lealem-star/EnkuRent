@@ -12,6 +12,9 @@ export const ManagerDashboardPage = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  const isAccountant =
+    user?.title?.toLowerCase().includes('accountant') || user?.role === 'ACCOUNTANT';
+
   const [stats, setStats] = useState({
     total: 0,
     occupied: 0,
@@ -26,6 +29,7 @@ export const ManagerDashboardPage = () => {
   });
 
   const [pendingPayments, setPendingPayments] = useState([]);
+  const [expiringContractsCount, setExpiringContractsCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   // Review Modal state
@@ -48,9 +52,10 @@ export const ManagerDashboardPage = () => {
     setLoading(true);
     try {
       const bQuery = activeBuildingId && activeBuildingId !== '__all__' ? `?buildingId=${activeBuildingId}` : '';
-      const [resOverview, resPayments] = await Promise.all([
+      const [resOverview, resPayments, resContracts] = await Promise.all([
         api.get(`/reports/overview${bQuery}`),
         api.get(`/payments?status=pending${activeBuildingId && activeBuildingId !== '__all__' ? `&buildingId=${activeBuildingId}` : ''}`),
+        api.get(`/contracts${bQuery}`).catch(() => ({ data: { success: false } })),
       ]);
 
       if (resOverview.data?.success) {
@@ -59,6 +64,9 @@ export const ManagerDashboardPage = () => {
       if (resPayments.data?.success) {
         const list = resPayments.data.data?.payments || resPayments.data.data || [];
         setPendingPayments(list.filter((p) => p.status === 'pending' || p.dbStatus === 'PENDING'));
+      }
+      if (resContracts.data?.success) {
+        setExpiringContractsCount(resContracts.data.data?.expiringCount || 0);
       }
     } catch (err) {
       console.warn('Manager dashboard error:', err.message);
@@ -163,55 +171,112 @@ export const ManagerDashboardPage = () => {
             setShowRecordModal(true);
           }}
         >
-          + Record Tenant Payment
+          {isAccountant ? '+ Record Cash / Slip Payment' : '+ Record Tenant Payment'}
         </button>
-        <button
-          className="btn btn-sm"
-          onClick={() => navigate('/manager/properties')}
-        >
-          View Floor Plans
-        </button>
-        <button
-          className="btn btn-sm btn-ghost"
-          onClick={() => navigate('/manager/reports')}
-        >
-          Export Collection Report
-        </button>
+
+        {isAccountant ? (
+          <>
+            <button
+              className="btn btn-sm"
+              onClick={() => navigate('/manager/payments')}
+            >
+              Bank Slip Verification Queue ({pendingPayments.length})
+            </button>
+            <button
+              className="btn btn-sm btn-ghost"
+              onClick={() => navigate('/manager/reports')}
+            >
+              Export Financial Statements (PDF/Excel)
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              className="btn btn-sm"
+              onClick={() => navigate('/manager/tenants')}
+            >
+              + Onboard Tenant
+            </button>
+            <button
+              className="btn btn-sm"
+              onClick={() => navigate('/manager/properties')}
+            >
+              View Floor Plans
+            </button>
+            <button
+              className="btn btn-sm btn-ghost"
+              onClick={() => navigate('/manager/contracts')}
+            >
+              Expiring Contracts ({expiringContractsCount})
+            </button>
+          </>
+        )}
       </div>
 
-      {/* Operational Stats Grid */}
-      <div className="stat-grid">
-        <StatCard
-          label="Offices Managed"
-          value={stats.total}
-          subtext={` (${stats.occupied} leased)`}
-        />
-        <StatCard
-          label="Vacant Offices"
-          value={stats.available}
-          subtext=" Ready for leasing"
-        />
-        <StatCard label="Monthly Expected" value={ETB(stats.expected)} />
-        <StatCard
-          label="Collected This Cycle"
-          value={ETB(stats.collected)}
-          flag={{
-            text: `${stats.collectionRate}% collected`,
-            style: { background: 'var(--green-soft)', color: 'var(--green)' },
-          }}
-        />
-        <StatCard label="Outstanding" value={ETB(stats.outstanding)} />
-        <StatCard
-          label="Late Payments"
-          value={stats.late}
-          valueStyle={{ color: stats.late > 0 ? 'var(--red)' : 'var(--ink)' }}
-        />
-        <StatCard
-          label="Slips Awaiting Review"
-          value={pendingPayments.length}
-          valueStyle={{ color: pendingPayments.length > 0 ? 'var(--amber)' : 'var(--ink)' }}
-        />
-      </div>
+      {/* Role-Adaptive Stat Grid */}
+      {isAccountant ? (
+        <div className="stat-grid">
+          <StatCard label="Monthly Expected" value={ETB(stats.expected)} />
+          <StatCard
+            label="Verified Collections"
+            value={ETB(stats.collected)}
+            flag={{
+              text: `${stats.collectionRate}% collected`,
+              style: { background: 'var(--green-soft)', color: 'var(--green)' },
+            }}
+          />
+          <StatCard label="Outstanding Balance" value={ETB(stats.outstanding)} />
+          <StatCard
+            label="Slips Pending Review"
+            value={pendingPayments.length}
+            valueStyle={{ color: pendingPayments.length > 0 ? 'var(--amber)' : 'var(--ink)' }}
+            subtext=" Immediate action required"
+          />
+          <StatCard
+            label="Late / Overdue Accounts"
+            value={stats.late}
+            valueStyle={{ color: stats.late > 0 ? 'var(--red)' : 'var(--ink)' }}
+          />
+          <StatCard
+            label="Collection Efficiency"
+            value={`${stats.collectionRate}%`}
+            subtext={` ${stats.occupied} active paying units`}
+          />
+        </div>
+      ) : (
+        <div className="stat-grid">
+          <StatCard
+            label="Offices Managed"
+            value={stats.total}
+            subtext={` (${stats.occupied} leased)`}
+          />
+          <StatCard
+            label="Vacant Ready Units"
+            value={stats.available}
+            subtext=" Available for new tenant"
+          />
+          <StatCard
+            label="Occupancy Rate"
+            value={`${stats.occupancyRate}%`}
+            flag={{
+              text: `${stats.occupied}/${stats.total} occupied`,
+              style: { background: 'var(--green-soft)', color: 'var(--green)' },
+            }}
+          />
+          <StatCard
+            label="Expiring Leases (45d)"
+            value={expiringContractsCount}
+            valueStyle={{ color: expiringContractsCount > 0 ? 'var(--amber)' : 'var(--ink)' }}
+            subtext=" Needs renewal outreach"
+          />
+          <StatCard
+            label="Pending Slip Reviews"
+            value={pendingPayments.length}
+            valueStyle={{ color: pendingPayments.length > 0 ? 'var(--amber)' : 'var(--ink)' }}
+          />
+          <StatCard label="Monthly Expected" value={ETB(stats.expected)} />
+        </div>
+      )}
 
       {/* Action Queue: Payments Awaiting Verification */}
       <div className="panel">

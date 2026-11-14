@@ -29,6 +29,27 @@ export const TenantHomePage = () => {
 
   useEffect(() => {
     fetchTenantData();
+
+    // Check if returning from Chapa Hosted Checkout
+    const hashSplit = window.location.hash.split('?');
+    const hashParams = new URLSearchParams(hashSplit[1] || '');
+    const urlParams = new URLSearchParams(window.location.search);
+    const paymentRef = hashParams.get('payment_ref') || urlParams.get('payment_ref') || hashParams.get('tx_ref');
+
+    if (paymentRef && paymentRef.startsWith('CHAPA_')) {
+      const verifyHostedPayment = async () => {
+        try {
+          const res = await api.get(`/gateway/chapa/verify/${paymentRef}`);
+          if (res.data?.success) {
+            toast('Payment verified and confirmed by Chapa! Official receipt issued.');
+            fetchTenantData();
+          }
+        } catch (err) {
+          toast(err.response?.data?.message || 'Chapa payment status pending confirmation.');
+        }
+      };
+      verifyHostedPayment();
+    }
   }, [fetchTenantData]);
 
   if (!currentTenant) {
@@ -61,6 +82,23 @@ export const TenantHomePage = () => {
 
     setPaying(true);
     try {
+      if (selectedMethod === 'Chapa') {
+        const res = await api.post('/gateway/chapa/initialize', {
+          tenantId: currentTenant.id,
+          period: 'September 2026',
+          returnUrl: `${window.location.origin}/#/tenant`,
+        });
+
+        if (res.data?.success && res.data.data?.checkoutUrl) {
+          toast('Opening Chapa Hosted Checkout...');
+          setShowPayModal(false);
+          // Redirect to official Chapa Checkout page
+          window.location.href = res.data.data.checkoutUrl;
+          return;
+        }
+      }
+
+      // Manual verification methods (Telebirr, CBE Birr, Bank Transfer)
       const res = await api.post('/gateway/instant-pay', {
         tenantId: currentTenant.id,
         method: selectedMethod,
@@ -69,11 +107,7 @@ export const TenantHomePage = () => {
       });
 
       if (res.data?.success) {
-        toast(
-          ['Chapa', 'Telebirr', 'CBE Birr'].includes(selectedMethod)
-            ? 'Payment confirmed — thank you!'
-            : 'Payment submitted — pending verification.'
-        );
+        toast(`Payment submitted via ${selectedMethod}. Status is PENDING verification by your accountant.`);
         setShowPayModal(false);
         fetchTenantData();
       }
@@ -171,8 +205,8 @@ export const TenantHomePage = () => {
         }
       >
         <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginTop: 0 }}>
-          Choose how you'd like to pay. Mobile money and card payments confirm instantly; bank
-          transfer requires a quick review.
+          Choose your payment method. Chapa payments verify automatically via Hosted Checkout.
+          Telebirr, CBE Birr, and Bank Transfer submissions are verified by your property accountant.
         </p>
 
         <div className="method-grid">
@@ -181,28 +215,28 @@ export const TenantHomePage = () => {
             onClick={() => setSelectedMethod('Chapa')}
           >
             <b>Chapa</b>
-            <span>Card &amp; mobile money</span>
+            <span>Hosted Card &amp; Telebirr</span>
           </div>
           <div
             className={`method-opt ${selectedMethod === 'Telebirr' ? 'selected' : ''}`}
             onClick={() => setSelectedMethod('Telebirr')}
           >
             <b>Telebirr</b>
-            <span>Instant confirmation</span>
+            <span>Accountant Review</span>
           </div>
           <div
             className={`method-opt ${selectedMethod === 'CBE Birr' ? 'selected' : ''}`}
             onClick={() => setSelectedMethod('CBE Birr')}
           >
             <b>CBE Birr</b>
-            <span>Instant confirmation</span>
+            <span>Accountant Review</span>
           </div>
           <div
             className={`method-opt ${selectedMethod === 'Bank Transfer' ? 'selected' : ''}`}
             onClick={() => setSelectedMethod('Bank Transfer')}
           >
             <b>Bank Transfer</b>
-            <span>Needs verification</span>
+            <span>Accountant Review</span>
           </div>
         </div>
       </Modal>

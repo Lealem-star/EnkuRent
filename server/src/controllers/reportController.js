@@ -6,19 +6,54 @@ import { successResponse, errorResponse } from '../utils/response.js';
 export const getOverview = async (req, res, next) => {
   try {
     const { buildingId } = req.query;
-    const whereOffice = {};
+    const whereOffice = { isDeleted: false };
 
-    if (!req.user.isOwner && req.user.buildingIds) {
+    if (req.user.isSuperAdmin) {
+      if (buildingId && buildingId !== '__all__') {
+        whereOffice.buildingId = String(buildingId);
+      }
+    } else if (req.user.isOwner) {
+      whereOffice.building = { ownerId: req.user.id, isDeleted: false };
+      if (buildingId && buildingId !== '__all__') {
+        whereOffice.buildingId = String(buildingId);
+      }
+    } else if (req.user.buildingIds && req.user.buildingIds.length > 0) {
       if (buildingId && buildingId !== '__all__') {
         if (!req.user.buildingIds.includes(String(buildingId))) {
-          return successResponse(res, 'No data accessible', {});
+          return successResponse(res, 'No data accessible', {
+            total: 0,
+            occupied: 0,
+            available: 0,
+            maintenance: 0,
+            expected: 0,
+            collected: 0,
+            outstanding: 0,
+            late: 0,
+            pending: 0,
+            collectionRate: 0,
+            occupancyRate: 0,
+            monthlyTrend: [],
+          });
         }
         whereOffice.buildingId = String(buildingId);
       } else {
         whereOffice.buildingId = { in: req.user.buildingIds };
       }
-    } else if (buildingId && buildingId !== '__all__') {
-      whereOffice.buildingId = String(buildingId);
+    } else {
+      return successResponse(res, 'No data accessible', {
+        total: 0,
+        occupied: 0,
+        available: 0,
+        maintenance: 0,
+        expected: 0,
+        collected: 0,
+        outstanding: 0,
+        late: 0,
+        pending: 0,
+        collectionRate: 0,
+        occupancyRate: 0,
+        monthlyTrend: [],
+      });
     }
 
     const offices = await prisma.office.findMany({
@@ -106,15 +141,27 @@ export const exportReport = async (req, res, next) => {
     const { type = 'revenue', format = 'pdf' } = req.params;
     const { buildingId } = req.query;
 
-    const whereBuilding = {};
-    if (!req.user.isOwner && req.user.buildingIds) {
+    const whereBuilding = { isDeleted: false };
+    if (req.user.isSuperAdmin) {
       if (buildingId && buildingId !== '__all__') {
+        whereBuilding.id = String(buildingId);
+      }
+    } else if (req.user.isOwner) {
+      whereBuilding.ownerId = req.user.id;
+      if (buildingId && buildingId !== '__all__') {
+        whereBuilding.id = String(buildingId);
+      }
+    } else if (req.user.buildingIds && req.user.buildingIds.length > 0) {
+      if (buildingId && buildingId !== '__all__') {
+        if (!req.user.buildingIds.includes(String(buildingId))) {
+          return errorResponse(res, 'Access denied for this building', 403);
+        }
         whereBuilding.id = String(buildingId);
       } else {
         whereBuilding.id = { in: req.user.buildingIds };
       }
-    } else if (buildingId && buildingId !== '__all__') {
-      whereBuilding.id = String(buildingId);
+    } else {
+      return errorResponse(res, 'No properties accessible for report export', 403);
     }
 
     const buildings = await prisma.building.findMany({
@@ -136,10 +183,10 @@ export const exportReport = async (req, res, next) => {
 
     if (format === 'xlsx') {
       const workbook = new ExcelJS.Workbook();
-      workbook.creator = 'EnkuRent';
+      workbook.creator = 'Enqopa RentPro';
       workbook.created = new Date();
 
-      const worksheet = workbook.addWorksheet('EnkuRent Report');
+      const worksheet = workbook.addWorksheet('Enqopa RentPro Report');
       worksheet.columns = [
         { header: 'Building', key: 'building', width: 25 },
         { header: 'Office', key: 'office', width: 12 },
@@ -175,7 +222,7 @@ export const exportReport = async (req, res, next) => {
       });
 
       res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-      res.setHeader('Content-Disposition', `attachment; filename=enkurent_${type}_report.xlsx`);
+      res.setHeader('Content-Disposition', `attachment; filename=enqopa_${type}_report.xlsx`);
       await workbook.xlsx.write(res);
       return res.end();
     }
@@ -183,19 +230,19 @@ export const exportReport = async (req, res, next) => {
     // Default to PDF
     const doc = new PDFDocument({ margin: 40 });
     res.setHeader('Content-Type', 'application/pdf');
-    res.setHeader('Content-Disposition', `attachment; filename=enkurent_${type}_report.pdf`);
+    res.setHeader('Content-Disposition', `attachment; filename=enqopa_${type}_report.pdf`);
     doc.pipe(res);
 
-    // Header styling matching EnkuRent aesthetic
-    doc.fontSize(20).font('Helvetica-Bold').fillColor('#16213A').text('EnkuRent — Financial & Property Report');
+    // Header styling matching Enqopa RentPro aesthetic
+    doc.fontSize(20).font('Helvetica-Bold').fillColor('#0B2239').text('Enqopa RentPro — Financial & Property Report');
     doc.fontSize(10).font('Helvetica').fillColor('#4A5170').text(`Generated: ${new Date().toLocaleString()} · Addis Ababa, Ethiopia`);
     doc.moveDown();
 
-    doc.rect(40, doc.y, 530, 2).fillColor('#B6892E').fill();
+    doc.rect(40, doc.y, 530, 2).fillColor('#F59E0B').fill();
     doc.moveDown(1.5);
 
     buildings.forEach((b) => {
-      doc.fontSize(14).font('Helvetica-Bold').fillColor('#16213A').text(b.name, { underline: true });
+      doc.fontSize(14).font('Helvetica-Bold').fillColor('#0B2239').text(b.name, { underline: true });
       doc.fontSize(9).font('Helvetica').fillColor('#4A5170').text(`Address: ${b.address} · Floors: ${b.floors}`);
       doc.moveDown(0.5);
 
@@ -206,7 +253,7 @@ export const exportReport = async (req, res, next) => {
         const rentText = c ? `ETB ${Number(c.rent).toLocaleString()}` : '—';
         const statusText = currentPay ? currentPay.status : (c ? 'OVERDUE' : o.status);
 
-        doc.fontSize(9).font('Helvetica').fillColor('#16213A')
+        doc.fontSize(9).font('Helvetica').fillColor('#0B2239')
           .text(`Office ${o.number} (Floor ${o.floor})  |  Tenant: ${t ? t.fullName : 'Vacant'}  |  Rent: ${rentText}  |  Status: ${statusText}`);
       });
       doc.moveDown(1.5);
@@ -214,7 +261,7 @@ export const exportReport = async (req, res, next) => {
 
     doc.rect(40, doc.y, 530, 1).fillColor('#E4E1D6').fill();
     doc.moveDown();
-    doc.fontSize(8).fillColor('#4A5170').text('EnkuRent Property Management System — Confidential', { align: 'center' });
+    doc.fontSize(8).fillColor('#4A5170').text('Enqopa Technologies PLC • Enqopa RentPro — Confidential', { align: 'center' });
 
     doc.end();
   } catch (error) {

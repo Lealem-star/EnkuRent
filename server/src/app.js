@@ -64,20 +64,32 @@ const limiter = rateLimit({
 });
 app.use('/api', limiter);
 
-// Body parsing middleware
-app.use(express.json());
+import { authenticate } from './middleware/auth.js';
+import { getSecureDocument } from './controllers/documentController.js';
+
+// Body parsing middleware with raw body preservation for webhook signature verification
+app.use(
+  express.json({
+    verify: (req, res, buf) => {
+      req.rawBody = buf;
+    },
+  })
+);
 app.use(express.urlencoded({ extended: true }));
 
-// Serve uploaded receipts statically
-const uploadsPath = path.resolve(__dirname, '../uploads');
-app.use('/uploads', express.static(uploadsPath));
-app.use('/uploads', express.static(path.resolve(process.cwd(), 'uploads')));
+// Protected authenticated document delivery (enforces multi-tenant ownership & safe pathing)
+app.get(
+  ['/uploads/:filename', '/uploads/*', '/api/documents/:filename', '/api/documents/*'],
+  authenticate,
+  getSecureDocument
+);
 
 // Root welcome route
 app.get('/', (req, res) => {
   res.json({
-    name: 'EnkuRent API',
-    tagline: 'Property & Rent Management for Office Buildings in Addis Ababa',
+    name: 'Enqopa RentPro API',
+    company: 'Enqopa Technologies PLC',
+    tagline: 'Smart Rental Management, Made Easy',
     version: '1.0.0',
     status: 'Running',
     endpoints: {

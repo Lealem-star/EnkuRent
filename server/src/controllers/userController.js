@@ -16,10 +16,18 @@ export const inviteUserSchema = z.object({
 
 export const getUsers = async (req, res, next) => {
   try {
+    const where = {};
+    if (!req.user.isSuperAdmin) {
+      where.OR = [
+        { id: req.user.id },
+        { ownerId: req.user.id },
+      ];
+    } else {
+      where.role = { in: ['OWNER', 'MANAGER'] };
+    }
+
     const users = await prisma.user.findMany({
-      where: {
-        role: { in: ['OWNER', 'MANAGER'] },
-      },
+      where,
       include: {
         buildings: {
           include: { building: true },
@@ -61,6 +69,31 @@ export const inviteUser = async (req, res, next) => {
       return errorResponse(res, 'A user with this email already exists', 400);
     }
 
+    // Enforce subscription plan staff quota
+    if (!req.user.isSuperAdmin) {
+      const activeSub = await prisma.subscription.findFirst({
+        where: {
+          ownerId: req.user.id,
+          status: { in: ['ACTIVE', 'TRIAL', 'PAST_DUE'] },
+        },
+        include: { plan: true },
+      });
+
+      if (activeSub) {
+        const staffCount = await prisma.user.count({
+          where: { ownerId: req.user.id, role: { in: ['MANAGER', 'OWNER'] } },
+        });
+
+        if (staffCount >= activeSub.plan.maxStaff) {
+          return errorResponse(
+            res,
+            `Staff account quota exceeded. Your ${activeSub.plan.name} plan allows up to ${activeSub.plan.maxStaff} staff members. Please upgrade your plan.`,
+            403
+          );
+        }
+      }
+    }
+
     const defaultPassword = await bcrypt.hash('password123', 10);
 
     const newUser = await prisma.$transaction(async (tx) => {
@@ -73,6 +106,7 @@ export const inviteUser = async (req, res, next) => {
           role,
           title,
           isActive: true,
+          ownerId: req.user.id,
         },
       });
 
@@ -113,6 +147,10 @@ export const updateUserBuildings = async (req, res, next) => {
     const user = await prisma.user.findUnique({ where: { id } });
     if (!user) {
       return errorResponse(res, 'User not found', 404);
+    }
+
+    if (!req.user.isSuperAdmin && user.ownerId !== req.user.id && user.id !== req.user.id) {
+      return errorResponse(res, 'Access denied: You do not manage this staff account', 403);
     }
 
     await prisma.$transaction(async (tx) => {

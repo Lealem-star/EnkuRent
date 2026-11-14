@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   getSystemOverview,
   getOwnersList,
+  getOwnerDetails,
   approveOwner,
   rejectOwner,
   toggleOwnerStatus,
@@ -15,6 +16,7 @@ router.use(authenticate, authorize('SUPER_ADMIN'));
 
 router.get('/overview', getSystemOverview);
 router.get('/owners', getOwnersList);
+router.get('/owners/:id', getOwnerDetails);
 router.post('/owners/:id/approve', approveOwner);
 router.post('/owners/:id/reject', rejectOwner);
 router.patch('/owners/:id/toggle-status', toggleOwnerStatus);

@@ -37,9 +37,9 @@ export const authenticate = async (req, res, next) => {
     }
 
     const isSuperAdmin = user.role === 'SUPER_ADMIN';
-    const isOwner = user.role === 'OWNER' || isSuperAdmin;
-    const isManager = user.role === 'MANAGER' || isOwner;
-    const buildingIds = (isOwner || isSuperAdmin) ? null : user.buildings.map((b) => b.buildingId);
+    const isOwner = user.role === 'OWNER';
+    const isManager = user.role === 'MANAGER' || user.role === 'ACCOUNTANT';
+    const buildingIds = isSuperAdmin ? null : (isOwner ? null : user.buildings.map((b) => b.buildingId));
 
     req.user = {
       id: user.id,
@@ -48,11 +48,13 @@ export const authenticate = async (req, res, next) => {
       phone: user.phone,
       role: user.role,
       title: user.title,
+      companyName: user.companyName,
+      ownerId: user.ownerId || (isOwner ? user.id : null),
       isSuperAdmin,
       isOwner,
       isManager,
       isTenant: user.role === 'TENANT',
-      buildingIds, // null for super admin and owner (all buildings)
+      buildingIds, // null for super admin and owner; manager has assigned buildings
       tenantId: user.tenantProfile?.id || null,
     };
 
@@ -84,17 +86,34 @@ export const authorize = (...allowedRoles) => {
 };
 
 /**
- * Ensures managers only access buildings assigned to them
+ * Ensures owners only access buildings they own, and managers only access buildings assigned to them
  */
 export const checkBuildingAccess = (buildingIdParam = 'buildingId') => {
-  return (req, res, next) => {
-    if (req.user.isOwner) return next();
+  return async (req, res, next) => {
+    if (req.user.isSuperAdmin) return next();
 
     const targetBuildingId = req.params[buildingIdParam] || req.body[buildingIdParam] || req.query[buildingIdParam];
-    if (targetBuildingId && req.user.buildingIds && !req.user.buildingIds.includes(targetBuildingId)) {
-      return errorResponse(res, 'Access denied: You are not assigned to this property.', 403);
-    }
+    if (!targetBuildingId || targetBuildingId === '__all__') return next();
 
-    next();
+    try {
+      if (req.user.isOwner) {
+        const building = await prisma.building.findUnique({
+          where: { id: String(targetBuildingId) },
+          select: { ownerId: true },
+        });
+        if (!building || building.ownerId !== req.user.id) {
+          return errorResponse(res, 'Access denied: You do not own this property.', 403);
+        }
+        return next();
+      }
+
+      if (req.user.buildingIds && !req.user.buildingIds.includes(String(targetBuildingId))) {
+        return errorResponse(res, 'Access denied: You are not assigned to this property.', 403);
+      }
+
+      next();
+    } catch (err) {
+      return errorResponse(res, 'Authorization check failed.', 500);
+    }
   };
 };

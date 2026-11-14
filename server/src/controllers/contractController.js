@@ -7,18 +7,28 @@ export const getContracts = async (req, res, next) => {
     const { buildingId, status } = req.query;
     const where = {};
 
-    // Scoping for managers
-    if (!req.user.isOwner && req.user.buildingIds) {
-      if (buildingId) {
+    if (req.user.isSuperAdmin) {
+      if (buildingId && buildingId !== '__all__') {
+        where.office = { buildingId: String(buildingId) };
+      }
+    } else if (req.user.isOwner) {
+      where.office = {
+        building: { ownerId: req.user.id, isDeleted: false },
+        ...(buildingId && buildingId !== '__all__' ? { buildingId: String(buildingId) } : {}),
+      };
+    } else if (req.user.buildingIds && req.user.buildingIds.length > 0) {
+      if (buildingId && buildingId !== '__all__') {
         if (!req.user.buildingIds.includes(String(buildingId))) {
-          return successResponse(res, 'No contracts accessible', []);
+          return successResponse(res, 'No contracts accessible', { contracts: [], expiringCount: 0, total: 0 });
         }
         where.office = { buildingId: String(buildingId) };
       } else {
         where.office = { buildingId: { in: req.user.buildingIds } };
       }
-    } else if (buildingId && buildingId !== '__all__') {
-      where.office = { buildingId: String(buildingId) };
+    } else if (req.user.role === 'TENANT') {
+      where.tenant = { userId: req.user.id };
+    } else {
+      return successResponse(res, 'No contracts accessible', { contracts: [], expiringCount: 0, total: 0 });
     }
 
     const contracts = await prisma.contract.findMany({
@@ -93,15 +103,25 @@ export const renewContract = async (req, res, next) => {
 
     const contract = await prisma.contract.findUnique({
       where: { id },
-      include: { office: true, tenant: true },
+      include: {
+        office: { include: { building: true } },
+        tenant: true,
+      },
     });
 
     if (!contract) {
       return errorResponse(res, 'Contract not found', 404);
     }
 
-    if (!req.user.isOwner && req.user.buildingIds && !req.user.buildingIds.includes(contract.office.buildingId)) {
-      return errorResponse(res, 'You do not have access to this building.', 403);
+    // Multi-tenant authorization check
+    if (!req.user.isSuperAdmin) {
+      if (req.user.isOwner) {
+        if (contract.office.building.ownerId !== req.user.id) {
+          return errorResponse(res, 'Access denied: You do not own this property contract.', 403);
+        }
+      } else if (!req.user.buildingIds || !req.user.buildingIds.includes(contract.office.buildingId)) {
+        return errorResponse(res, 'Access denied: You are not assigned to manage this building.', 403);
+      }
     }
 
     const updated = await prisma.$transaction(async (tx) => {
@@ -159,11 +179,25 @@ export const changeRent = async (req, res, next) => {
 
     const contract = await prisma.contract.findUnique({
       where: { id },
-      include: { office: true, tenant: true },
+      include: {
+        office: { include: { building: true } },
+        tenant: true,
+      },
     });
 
     if (!contract) {
       return errorResponse(res, 'Contract not found', 404);
+    }
+
+    // Multi-tenant authorization check
+    if (!req.user.isSuperAdmin) {
+      if (req.user.isOwner) {
+        if (contract.office.building.ownerId !== req.user.id) {
+          return errorResponse(res, 'Access denied: You do not own this property contract.', 403);
+        }
+      } else if (!req.user.buildingIds || !req.user.buildingIds.includes(contract.office.buildingId)) {
+        return errorResponse(res, 'Access denied: You are not assigned to manage this building.', 403);
+      }
     }
 
     const result = await prisma.$transaction(async (tx) => {

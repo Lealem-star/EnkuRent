@@ -98,6 +98,20 @@ export const OfficeDetailPage = () => {
     }
   };
 
+  // Handle Toggle Maintenance
+  const handleToggleMaintenance = async () => {
+    const nextStatus = office.status === 'MAINTENANCE' ? 'AVAILABLE' : 'MAINTENANCE';
+    try {
+      const res = await api.patch(`/offices/${id}/status`, { status: nextStatus });
+      if (res.data?.success) {
+        toast(`Office status changed to ${nextStatus}.`);
+        fetchOffice();
+      }
+    } catch (err) {
+      toast(err.response?.data?.message || 'Failed to update office status');
+    }
+  };
+
   // Contract expiry calculations
   const contractDaysLeft = activeContract
     ? Math.round((new Date(activeContract.endDate) - new Date()) / (1000 * 60 * 60 * 24))
@@ -127,13 +141,19 @@ export const OfficeDetailPage = () => {
         {/* Tab Body */}
         {!tenant && office.status === 'AVAILABLE' && (
           <div className="panel-body">
-            <div className="empty">This office is currently vacant.</div>
-            <div style={{ textAlign: 'center' }}>
+            <div className="empty">This office is currently vacant and ready for leasing.</div>
+            <div style={{ textAlign: 'center', display: 'flex', gap: '10px', justifyContent: 'center' }}>
               <button
                 className="btn btn-primary"
                 onClick={() => navigate(`${basePath}/properties/${office.buildingId}`)}
               >
                 + Assign a Tenant
+              </button>
+              <button
+                className="btn btn-ghost"
+                onClick={handleToggleMaintenance}
+              >
+                Mark Under Maintenance
               </button>
             </div>
           </div>
@@ -141,7 +161,15 @@ export const OfficeDetailPage = () => {
 
         {!tenant && office.status === 'MAINTENANCE' && (
           <div className="panel-body">
-            <div className="empty">This office is marked under maintenance.</div>
+            <div className="empty" style={{ color: 'var(--amber)' }}>This office is currently marked under maintenance.</div>
+            <div style={{ textAlign: 'center' }}>
+              <button
+                className="btn btn-primary"
+                onClick={handleToggleMaintenance}
+              >
+                Mark Maintenance Complete (Make Available)
+              </button>
+            </div>
           </div>
         )}
 
@@ -462,7 +490,7 @@ export const OfficeDetailPage = () => {
                 className="mono"
                 style={{ fontSize: '12.5px', color: 'var(--blue)', wordBreak: 'break-all' }}
               >
-                enkurent.et/o/{office.id}
+                enqoparentpro.et/o/{office.id}
               </div>
               <div style={{ marginTop: '10px', display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <a

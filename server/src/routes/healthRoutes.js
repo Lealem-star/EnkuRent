@@ -9,7 +9,7 @@ router.get('/', async (req, res) => {
     // Check database connection by executing a lightweight query
     await prisma.$queryRaw`SELECT 1`;
 
-    return successResponse(res, 'EnkuRent API is healthy', {
+    return successResponse(res, 'Enqopa RentPro API is healthy', {
       status: 'OK',
       uptime: process.uptime(),
       timestamp: new Date().toISOString(),

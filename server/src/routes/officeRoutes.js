@@ -5,7 +5,7 @@ import {
   updateOfficeStatus,
   getOfficeQrCode,
 } from '../controllers/officeController.js';
-import { authenticate } from '../middleware/auth.js';
+import { authenticate, authorize } from '../middleware/auth.js';
 
 const router = Router();
 
@@ -15,7 +15,7 @@ router.get('/:id/qr', getOfficeQrCode);
 router.use(authenticate);
 router.get('/', getOffices);
 router.get('/:id', getOfficeById);
-router.patch('/:id/status', updateOfficeStatus);
+router.patch('/:id/status', authorize('OWNER', 'MANAGER'), updateOfficeStatus);
 
 export default router;
 

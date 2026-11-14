@@ -17,3 +17,17 @@ ReactDOM.createRoot(document.getElementById('root')).render(
     </HashRouter>
   </React.StrictMode>
 );
+
+// Register PWA Service Worker
+if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker
+      .register('/sw.js')
+      .then((reg) => {
+        console.log('[Enqopa RentPro] PWA Service Worker registered:', reg.scope);
+      })
+      .catch((err) => {
+        console.warn('[Enqopa RentPro] PWA Service Worker registration skipped:', err.message);
+      });
+  });
+}

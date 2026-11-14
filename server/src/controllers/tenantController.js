@@ -31,9 +31,33 @@ export const getTenants = async (req, res, next) => {
     const { buildingId, search } = req.query;
     const where = {};
 
-    // Scoping for managers
-    if (!req.user.isOwner && req.user.buildingIds) {
-      if (buildingId) {
+    if (req.user.isSuperAdmin) {
+      if (buildingId && buildingId !== '__all__') {
+        where.contracts = {
+          some: {
+            status: 'ACTIVE',
+            office: { buildingId: String(buildingId) },
+          },
+        };
+      }
+    } else if (req.user.isOwner) {
+      if (buildingId && buildingId !== '__all__') {
+        where.contracts = {
+          some: {
+            status: 'ACTIVE',
+            office: { buildingId: String(buildingId), building: { ownerId: req.user.id } },
+          },
+        };
+      } else {
+        where.contracts = {
+          some: {
+            status: 'ACTIVE',
+            office: { building: { ownerId: req.user.id } },
+          },
+        };
+      }
+    } else if (req.user.buildingIds && req.user.buildingIds.length > 0) {
+      if (buildingId && buildingId !== '__all__') {
         if (!req.user.buildingIds.includes(String(buildingId))) {
           return successResponse(res, 'No tenants accessible', []);
         }
@@ -51,13 +75,8 @@ export const getTenants = async (req, res, next) => {
           },
         };
       }
-    } else if (buildingId && buildingId !== '__all__') {
-      where.contracts = {
-        some: {
-          status: 'ACTIVE',
-          office: { buildingId: String(buildingId) },
-        },
-      };
+    } else {
+      return successResponse(res, 'No tenants accessible', []);
     }
 
     if (search) {
@@ -179,6 +198,17 @@ export const getTenantById = async (req, res, next) => {
       return errorResponse(res, 'Tenant not found', 404);
     }
 
+    // Multi-tenant authorization check
+    if (!req.user.isSuperAdmin) {
+      const isSelf = req.user.tenantId === tenant.id || req.user.id === tenant.userId;
+      const ownsTenantContract = tenant.contracts.some((c) => c.office?.building?.ownerId === req.user.id);
+      const managesTenantContract = req.user.buildingIds && tenant.contracts.some((c) => req.user.buildingIds.includes(c.office?.buildingId));
+
+      if (!isSelf && !ownsTenantContract && !managesTenantContract) {
+        return errorResponse(res, 'Access denied: You do not have authorization to view this tenant.', 403);
+      }
+    }
+
     return successResponse(res, 'Tenant details retrieved', tenant);
   } catch (error) {
     next(error);
@@ -213,14 +243,20 @@ export const createTenant = async (req, res, next) => {
       return errorResponse(res, 'Office is already occupied.', 400);
     }
 
-    // Manager building permission check
-    if (!req.user.isOwner && req.user.buildingIds && !req.user.buildingIds.includes(office.buildingId)) {
-      return errorResponse(res, 'You do not have permission to manage this building.', 403);
+    // Multi-tenant building permission check
+    if (!req.user.isSuperAdmin) {
+      if (req.user.isOwner) {
+        if (office.building?.ownerId !== req.user.id) {
+          return errorResponse(res, 'Access denied: You do not own this property building.', 403);
+        }
+      } else if (!req.user.buildingIds || !req.user.buildingIds.includes(office.buildingId)) {
+        return errorResponse(res, 'Access denied: You do not have permission to manage this building.', 403);
+      }
     }
 
     const start = startDate ? new Date(startDate) : new Date();
     const end = endDate ? new Date(endDate) : new Date(new Date().setFullYear(start.getFullYear() + 1));
-    const cleanEmail = email && email.trim() !== '' ? email.trim().toLowerCase() : `${fullName.toLowerCase().replace(/[\s\W]+/g, '.')}.${office.number}@enkurent.et`;
+    const cleanEmail = email && email.trim() !== '' ? email.trim().toLowerCase() : `${fullName.toLowerCase().replace(/[\s\W]+/g, '.')}.${office.number}@enqoparentpro.et`;
 
     const result = await prisma.$transaction(async (tx) => {
       // 1. Create or link Tenant
@@ -276,7 +312,7 @@ export const createTenant = async (req, res, next) => {
       });
 
       return { tenant, contract };
-    });
+    }, { maxWait: 15000, timeout: 30000 });
 
     return successResponse(res, 'Tenant assigned and portal link generated successfully', result, 201);
   } catch (error) {
@@ -288,6 +324,28 @@ export const updateTenant = async (req, res, next) => {
   try {
     const { id } = req.params;
     const { fullName, phone, email, idNumber } = req.body;
+
+    const existingTenant = await prisma.tenant.findUnique({
+      where: { id },
+      include: {
+        contracts: {
+          include: { office: { include: { building: true } } },
+        },
+      },
+    });
+
+    if (!existingTenant) {
+      return errorResponse(res, 'Tenant not found', 404);
+    }
+
+    if (!req.user.isSuperAdmin) {
+      const ownsTenantContract = existingTenant.contracts.some((c) => c.office?.building?.ownerId === req.user.id);
+      const managesTenantContract = req.user.buildingIds && existingTenant.contracts.some((c) => req.user.buildingIds.includes(c.office?.buildingId));
+
+      if (!ownsTenantContract && !managesTenantContract) {
+        return errorResponse(res, 'Access denied: You do not have authorization to modify this tenant.', 403);
+      }
+    }
 
     const tenant = await prisma.tenant.update({
       where: { id },
@@ -319,7 +377,7 @@ export const endTenancy = async (req, res, next) => {
       include: {
         contracts: {
           where: { status: 'ACTIVE' },
-          include: { office: true },
+          include: { office: { include: { building: true } } },
         },
       },
     });
@@ -334,6 +392,11 @@ export const endTenancy = async (req, res, next) => {
     }
 
     const office = activeContract.office;
+
+    // Multi-tenant IDOR check
+    if (!req.user.isSuperAdmin && req.user.isOwner && office.building?.ownerId !== req.user.id) {
+      return errorResponse(res, 'Access denied: You do not own this property', 403);
+    }
 
     await prisma.$transaction(async (tx) => {
       // 1. Mark contract as ENDED
@@ -363,7 +426,7 @@ export const endTenancy = async (req, res, next) => {
           meta: `Ended tenancy for ${tenant.fullName} — Office ${office.number} now available`,
         },
       });
-    });
+    }, { maxWait: 15000, timeout: 30000 });
 
     return successResponse(res, `Tenancy ended for ${tenant.fullName}. Office ${office.number} is now available.`);
   } catch (error) {

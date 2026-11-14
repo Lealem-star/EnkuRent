@@ -1,6 +1,6 @@
-# Addis Estate — Property & Rent Management
+# Enqopa RentPro — Smart Rental Management, Made Easy
 
-A Property & Rent Management System designed for commercial and office buildings in Addis Ababa, Ethiopia. Recreated from the prototype at `design/addis-estate-ui.html` and connected to a real Node.js/Express + MySQL + Prisma backend.
+A Property & Rent Management SaaS platform designed for commercial and office buildings in Addis Ababa, Ethiopia. Developed by **Enqopa Technologies PLC**. Recreated from the prototype at `design/addis-estate-ui.html` and connected to a real Node.js/Express + MySQL + Prisma backend.
 
 ---
 
@@ -97,7 +97,7 @@ npm run create-system-owner
 
 Or pass custom credentials directly:
 ```bash
-npm run create-system-owner -- --email="admin@enkurent.et" --password="SuperAdminPassword123!" --name="EnkuRent Administrator" --phone="0911000000"
+npm run create-system-owner -- --email="admin@enqoparentpro.et" --password="SuperAdminPassword123!" --name="Enqopa System Owner" --phone="0911000000"
 ```
 
 Once initialized, sign in at `http://localhost:5173/login` to access the **System Admin Portal** (`/admin/dashboard`) and approve incoming Building Owner registrations.

@@ -32,9 +32,13 @@ export const errorHandler = (err, req, res, next) => {
     return errorResponse(res, 'Token expired. Please log in again.', 401);
   }
 
-  // Default fallback
+  // Default fallback - sanitized for production security
+  const isProduction = process.env.NODE_ENV === 'production';
   const statusCode = err.statusCode || 500;
-  const message = err.message || 'Internal Server Error';
+  const message = isProduction && statusCode === 500
+    ? 'An unexpected error occurred. Please contact Enqopa support.'
+    : (err.message || 'Internal Server Error');
+
   return errorResponse(res, message, statusCode);
 };
 

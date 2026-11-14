@@ -42,7 +42,7 @@ export const TenantShell = () => {
       <div className="tenant-top">
         <div>
           <div className="tenant-top-office">
-            {office ? `Office ${office.number} · ${office.buildingName}` : 'EnkuRent Portal'}
+            {office ? `Office ${office.number} · ${office.buildingName}` : 'Enqopa RentPro Portal'}
           </div>
           <h2>Hello, {currentTenant ? currentTenant.fullName.split(' ')[0] : 'Tenant'}</h2>
         </div>
