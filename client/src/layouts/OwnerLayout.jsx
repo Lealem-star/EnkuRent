@@ -173,92 +173,47 @@ export const OwnerLayout = () => {
 
       {/* Sidebar */}
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`} id="sidebar">
-        {/* Unified Brand & Identity Header Card */}
+        <div className="brand" style={{ padding: '0 4px 16px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '16px' }}>
+          <img
+            src="/logo.jpg"
+            alt="Enqopa RentPro"
+            style={{
+              height: '36px',
+              width: 'auto',
+              borderRadius: '6px',
+              background: '#ffffff',
+              padding: '2px 6px',
+              objectFit: 'contain',
+            }}
+          />
+        </div>
+
+        {/* User Identity Box */}
         <div
           style={{
-            background: 'linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, rgba(255, 255, 255, 0.02) 100%)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '12px',
-            padding: '12px',
-            marginBottom: '12px',
-            boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)',
+            background: 'rgba(255,255,255,0.06)',
+            borderRadius: '8px',
+            padding: '10px 12px',
+            marginBottom: '10px',
           }}
         >
-          {/* Logo & Role Badge Row */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingBottom: '10px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-              marginBottom: '10px',
-            }}
-          >
-            <img
-              src="/logo.jpg"
-              alt="Enqopa RentPro"
-              style={{
-                height: '32px',
-                width: 'auto',
-                borderRadius: '6px',
-                background: '#ffffff',
-                padding: '2px 6px',
-                objectFit: 'contain',
-              }}
-            />
+          <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#fff' }}>
+            {user?.name || 'Meseret Alemayehu'}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
             <span
               style={{
-                fontSize: '9.5px',
+                fontSize: '10px',
                 fontWeight: 700,
-                letterSpacing: '0.04em',
-                background: 'var(--gold, #f59e0b)',
+                background: 'var(--gold)',
                 color: '#211804',
-                padding: '2px 7px',
-                borderRadius: '9999px',
+                padding: '2px 6px',
+                borderRadius: '4px',
               }}
             >
               OWNER
             </span>
-          </div>
-
-          {/* User Profile Information */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                color: '#0b2239',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '12px',
-                flexShrink: 0,
-                boxShadow: '0 2px 6px rgba(245, 158, 11, 0.35)',
-              }}
-            >
-              {user?.name ? user.name.split(' ').map((n) => n[0]).join('').slice(0, 2).toUpperCase() : 'OW'}
-            </div>
-            <div style={{ overflow: 'hidden', flex: 1 }}>
-              <div
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#fff',
-                  whiteSpace: 'nowrap',
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                }}
-              >
-                {user?.name || 'Meseret Alemayehu'}
-              </div>
-              <div style={{ fontSize: '11px', color: '#9AA2BE', marginTop: '1px' }}>
-                All Properties Portfolio
-              </div>
-            </div>
+            <span style={{ fontSize: '11px', color: '#9AA2BE' }}>All Properties</span>
           </div>
         </div>
 
