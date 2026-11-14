@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { TopNavUserProfile } from '../components/TopNavUserProfile';
 import {
   LayoutDashboard,
   Building2,
@@ -118,118 +119,20 @@ export const ManagerLayout = () => {
       {/* Sidebar */}
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`} id="sidebar">
         {/* Brand Logo Header */}
-        <div style={{ padding: '0 4px 14px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '14px' }}>
+        <div style={{ padding: '4px 6px 18px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '18px' }}>
           <img
             src="/logo.jpg"
             alt="Enqopa RentPro"
             style={{
-              height: '36px',
+              height: '38px',
               width: 'auto',
-              borderRadius: '6px',
+              borderRadius: '8px',
               background: '#ffffff',
-              padding: '2px 6px',
+              padding: '3px 8px',
               objectFit: 'contain',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
             }}
           />
-        </div>
-
-        {/* User Identity Box */}
-        <div
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '10px',
-            padding: '10px 12px',
-            marginBottom: '16px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                background: isAccountant
-                  ? 'linear-gradient(135deg, #10B981 0%, #059669 100%)'
-                  : 'linear-gradient(135deg, #0B2239 0%, #1e3a5f 100%)',
-                color: '#ffffff',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '12px',
-                flexShrink: 0,
-                border: '1px solid rgba(255,255,255,0.1)',
-              }}
-            >
-              {isAccountant ? 'PA' : 'PM'}
-            </div>
-            <div style={{ overflow: 'hidden' }}>
-              <div
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#f8fafc',
-                  whiteSpace: 'nowrap',
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                }}
-              >
-                {user?.name || (isAccountant ? 'Selam Fikru' : 'Getnet A.')}
-              </div>
-              <div
-                style={{
-                  fontSize: '11px',
-                  color: '#94a3b8',
-                  whiteSpace: 'nowrap',
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                }}
-              >
-                {user?.email || 'staff@enqoparentpro.et'}
-              </div>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginTop: '8px',
-              paddingTop: '6px',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <span
-              style={{
-                fontSize: '9.5px',
-                fontWeight: 700,
-                letterSpacing: '0.05em',
-                background: isAccountant ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)',
-                color: isAccountant ? '#34d399' : '#fbbf24',
-                padding: '2px 7px',
-                borderRadius: '9999px',
-                border: `1px solid ${isAccountant ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.4)'}`,
-              }}
-            >
-              {isAccountant ? 'ACCOUNTANT' : 'PROPERTY MANAGER'}
-            </span>
-          </div>
-
-          <div
-            style={{
-              fontSize: '10.5px',
-              color: '#94a3b8',
-              marginTop: '6px',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis',
-              whiteSpace: 'nowrap',
-            }}
-            title={assignedBuildingNames}
-          >
-            📍 {assignedBuildingNames}
-          </div>
         </div>
 
         {/* Navigation */}
@@ -291,7 +194,7 @@ export const ManagerLayout = () => {
       <div className="main">
         {/* Topbar */}
         <div className="topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
               className="menu-btn"
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -309,6 +212,16 @@ export const ManagerLayout = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Top Right User Profile */}
+          <div className="topbar-right">
+            <TopNavUserProfile
+              user={user}
+              roleLabel={isAccountant ? 'ACCOUNTANT' : 'PROPERTY MANAGER'}
+              subText={assignedBuildingNames}
+              onSignOut={handleSignOut}
+            />
           </div>
         </div>
 

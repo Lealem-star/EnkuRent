@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { Building2, LogOut, User } from 'lucide-react';
+import { TopNavUserProfile } from '../components/TopNavUserProfile';
 
 export const TenantLayout = () => {
   const { user, logout } = useAuth();
@@ -26,17 +26,12 @@ export const TenantLayout = () => {
           </div>
 
           <div className="flex items-center space-x-4">
-            <div className="hidden sm:flex items-center space-x-2 text-sm text-slate-700">
-              <User className="w-4 h-4 text-slate-400" />
-              <span className="font-medium">{user?.name}</span>
-            </div>
-            <button
-              onClick={handleLogout}
-              className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-            >
-              <LogOut className="w-3.5 h-3.5" />
-              <span>Log out</span>
-            </button>
+            <TopNavUserProfile
+              user={user}
+              roleLabel="TENANT"
+              subText="Tenant Portal"
+              onSignOut={handleLogout}
+            />
           </div>
         </div>
       </header>

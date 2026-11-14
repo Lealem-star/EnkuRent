@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import BuildingSwitcher from '../components/BuildingSwitcher';
+import { TopNavUserProfile } from '../components/TopNavUserProfile';
 import Modal from '../components/Modal';
 import api from '../services/api';
 import { ETB, fmtDate } from '../utils/formatters';
@@ -173,48 +174,20 @@ export const OwnerLayout = () => {
 
       {/* Sidebar */}
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`} id="sidebar">
-        <div className="brand" style={{ padding: '0 4px 16px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '16px' }}>
+        <div className="brand" style={{ padding: '4px 6px 18px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '16px' }}>
           <img
             src="/logo.jpg"
             alt="Enqopa RentPro"
             style={{
-              height: '36px',
+              height: '38px',
               width: 'auto',
-              borderRadius: '6px',
+              borderRadius: '8px',
               background: '#ffffff',
-              padding: '2px 6px',
+              padding: '3px 8px',
               objectFit: 'contain',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
             }}
           />
-        </div>
-
-        {/* User Identity Box */}
-        <div
-          style={{
-            background: 'rgba(255,255,255,0.06)',
-            borderRadius: '8px',
-            padding: '10px 12px',
-            marginBottom: '10px',
-          }}
-        >
-          <div style={{ fontSize: '12.5px', fontWeight: 600, color: '#fff' }}>
-            {user?.name || 'Meseret Alemayehu'}
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px' }}>
-            <span
-              style={{
-                fontSize: '10px',
-                fontWeight: 700,
-                background: 'var(--gold)',
-                color: '#211804',
-                padding: '2px 6px',
-                borderRadius: '4px',
-              }}
-            >
-              OWNER
-            </span>
-            <span style={{ fontSize: '11px', color: '#9AA2BE' }}>All Properties</span>
-          </div>
         </div>
 
         {/* Subscription Tier & Quota Meter Widget */}
@@ -316,8 +289,14 @@ export const OwnerLayout = () => {
             </div>
           </div>
 
-          <div className="topbar-right">
+          <div className="topbar-right" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <BuildingSwitcher />
+            <TopNavUserProfile
+              user={user}
+              roleLabel="OWNER"
+              subText="All Properties Portfolio"
+              onSignOut={handleSignOut}
+            />
           </div>
         </div>
 

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { TopNavUserProfile } from '../components/TopNavUserProfile';
 import {
   LayoutDashboard,
   Building2,
@@ -171,105 +172,21 @@ export const SystemAdminLayout = () => {
       {/* Sidebar */}
       <div className={`sidebar ${sidebarOpen ? 'open' : ''}`} id="sidebar" style={{ display: 'flex', flexDirection: 'column' }}>
         {/* Brand Logo Header */}
-        <div style={{ padding: '0 4px 14px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '14px' }}>
+        <div style={{ padding: '4px 6px 18px', borderBottom: '1px solid rgba(255, 255, 255, 0.08)', marginBottom: '18px' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <img
               src="/logo.jpg"
               alt="Enqopa RentPro"
               style={{
-                height: '36px',
+                height: '38px',
                 width: 'auto',
-                borderRadius: '6px',
+                borderRadius: '8px',
                 background: '#ffffff',
-                padding: '2px 6px',
+                padding: '3px 8px',
                 objectFit: 'contain',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.2)',
               }}
             />
-          </div>
-        </div>
-
-        {/* User Identity Box */}
-        <div
-          style={{
-            background: 'rgba(255,255,255,0.04)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '10px',
-            padding: '10px 12px',
-            marginBottom: '14px',
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <div
-              style={{
-                width: '32px',
-                height: '32px',
-                borderRadius: '8px',
-                background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                color: '#0b2239',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                fontWeight: 700,
-                fontSize: '12px',
-                flexShrink: 0,
-                boxShadow: '0 2px 6px rgba(245, 158, 11, 0.35)',
-              }}
-            >
-              SO
-            </div>
-            <div style={{ overflow: 'hidden' }}>
-              <div
-                style={{
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  color: '#f8fafc',
-                  whiteSpace: 'nowrap',
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                }}
-              >
-                {user?.name || 'System Owner'}
-              </div>
-              <div
-                style={{
-                  fontSize: '11px',
-                  color: '#94a3b8',
-                  whiteSpace: 'nowrap',
-                  textOverflow: 'ellipsis',
-                  overflow: 'hidden',
-                  marginTop: '1px',
-                }}
-              >
-                {user?.email || 'admin@enqoparentpro.et'}
-              </div>
-            </div>
-          </div>
-
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              marginTop: '8px',
-              paddingTop: '6px',
-              borderTop: '1px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <span
-              style={{
-                fontSize: '9px',
-                fontWeight: 700,
-                letterSpacing: '0.05em',
-                background: 'rgba(245, 158, 11, 0.18)',
-                color: '#fbbf24',
-                border: '1px solid rgba(245, 158, 11, 0.35)',
-                padding: '2px 7px',
-                borderRadius: '9999px',
-              }}
-            >
-              SUPER ADMIN
-            </span>
-            <span style={{ fontSize: '10.5px', color: '#64748b' }}>Root Control</span>
           </div>
         </div>
 
@@ -358,7 +275,7 @@ export const SystemAdminLayout = () => {
       <div className="main">
         {/* Topbar */}
         <div className="topbar">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
               className="menu-btn"
               onClick={() => setSidebarOpen(!sidebarOpen)}
@@ -376,6 +293,16 @@ export const SystemAdminLayout = () => {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* Top Right User Profile */}
+          <div className="topbar-right">
+            <TopNavUserProfile
+              user={user}
+              roleLabel="SUPER ADMIN"
+              subText="Root Platform Control"
+              onSignOut={handleSignOut}
+            />
           </div>
         </div>
 
