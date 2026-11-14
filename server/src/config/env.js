@@ -11,7 +11,7 @@ export const validateEnv = () => {
 
   if (isProduction) {
     if (process.env.JWT_SECRET && (process.env.JWT_SECRET.includes('sample') || process.env.JWT_SECRET.includes('super_secret') || process.env.JWT_SECRET.length < 32)) {
-      throw new Error('FATAL SECURITY ERROR: JWT_SECRET in production must be a high-entropy secret of at least 32 characters.');
+      throw new Error(`FATAL SECURITY ERROR: JWT_SECRET in production must be a high-entropy secret of at least 32 characters (received length: ${process.env.JWT_SECRET.length}).`);
     }
     if (!process.env.CHAPA_SECRET_KEY || process.env.CHAPA_SECRET_KEY.includes('sample')) {
       throw new Error('FATAL SECURITY ERROR: Valid production CHAPA_SECRET_KEY must be configured.');

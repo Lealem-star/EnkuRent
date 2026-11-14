@@ -15,6 +15,9 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
+// Trust reverse proxy (Render, Cloudflare, NGINX) for accurate client IP in rate-limiting
+app.set('trust proxy', 1);
+
 // Security HTTP headers with cross-origin resource policy for uploaded files
 app.use(
   helmet({
